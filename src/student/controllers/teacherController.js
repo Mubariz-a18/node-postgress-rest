@@ -60,6 +60,7 @@ async function getTeacherById(req, res) {
 }
 
 
+
 async function updateTeacher(req, res) {
     try {
         const id = +req.params.id;
