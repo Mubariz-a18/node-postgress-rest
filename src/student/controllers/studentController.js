@@ -1,9 +1,19 @@
-const pool = require("../../db")
-const { getStudentsQ, getStudentQ, checkEmailQ, addStudentQ, deleteStudentQ, updateStudentQ } = require('./quieries')
+const pool = require("../../../db")
+const { getStudentsQ, getStudentQ, checkEmailQ, addStudentQ, deleteStudentQ, updateStudentQ, getStudentCount } = require('../queries/studentQuieries')
 async function getStudents(req, res) {
     try {
-        const data = await pool.query(getStudentsQ)
-        res.status(200).json(data.rows)
+        const page = +req.query.page || 1;
+        const pageSize = +req.query.pageSize || 5;
+        const offset = (page-1 )* pageSize;
+        const countResult = await pool.query(getStudentCount)
+        const data = await pool.query(getStudentsQ,[pageSize,offset]);
+
+        res.status(200).json({
+            data:data['rows'],
+            totalStudents:parseInt(countResult.rows[0].count),
+            page,
+            pageSize,
+        })
 
     } catch (error) {
         console.log(error)
@@ -30,7 +40,9 @@ async function addStudent(req, res) {
             name,
             email,
             age,
-            dob
+            dob,
+            teacherName,
+            teacherId
         } = req.body
         const checkUserExist = await pool.query(checkEmailQ,[email]);
         if(checkUserExist.rowCount){
@@ -38,7 +50,7 @@ async function addStudent(req, res) {
                 message:"email already exists"
             })
         }
-        const data = await pool.query(addStudentQ,[name,email,age,dob])
+        const data = await pool.query(addStudentQ,[name,email,age,dob,teacherName,teacherId])
         if(data.rowCount){
             res.status(201).json({message:"Sucesfully added"})
         }
